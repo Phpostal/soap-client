@@ -22,13 +22,14 @@ interface ClientInterface
     /**
      * Create one or more Salesforce objects
      *
-     * @param array  $objects    Array of Salesforce objects
+     * @param array $objects Array of Salesforce objects
      * @param string $objectType Object type, e.g., account or contact
      *
+     * @param bool $bypassDuplicates
      * @return Result\SaveResult[]
      * @link http://www.salesforce.com/us/developer/docs/api/Content/sforce_api_calls_create.htm
      */
-    public function create(array $objects, $objectType);
+    public function create(array $objects, $objectType, $bypassDuplicates = false);
 
     /**
      * Deletes one or more records from your organization’s data
@@ -232,13 +233,14 @@ interface ClientInterface
      *
      * @param string $externalFieldName Name of external field (must be id
      *                                  or external id)
-     * @param array  $objects           Array of objects
-     * @param string $objectType        Object type, e.g., account or contact
+     * @param array $objects Array of objects
+     * @param string $objectType Object type, e.g., account or contact
      *
+     * @param bool $bypassDuplicates
      * @return Result\UpsertResult[]
      * @link http://www.salesforce.com/us/developer/docs/api/Content/sforce_api_calls_upsert.htm
      */
-    public function upsert($externalFieldName, array $objects, $objectType);
+    public function upsert($externalFieldName, array $objects, $objectType, $bypassDuplicates = false);
 
     /**
      * Retrieves the current system timestamp (Coordinated Universal Time (UTC)

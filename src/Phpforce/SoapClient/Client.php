@@ -109,11 +109,12 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * {@inheritdoc}
      */
-    public function create(array $objects, $type)
+    public function create(array $objects, $type, $bypassDuplicates = false)
     {
         $result = $this->call(
             'create',
-            array('sObjects' => $this->createSoapVars($objects, $type))
+            array('sObjects' => $this->createSoapVars($objects, $type)),
+            $bypassDuplicates
         );
 
         return $this->checkResult($result, $objects);
@@ -390,14 +391,15 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * {@inheritdoc}
      */
-    public function upsert($externalIdFieldName, array $objects, $type)
+    public function upsert($externalIdFieldName, array $objects, $type, $bypassDuplicates = false)
     {
         return $this->call(
             'upsert',
             array(
                 'externalIDFieldName' => $externalIdFieldName,
                 'sObjects'            => $this->createSoapVars($objects, $type)
-            )
+            ),
+            $bypassDuplicates
         );
     }
 
@@ -541,17 +543,25 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      * Issue a call to Salesforce API
      *
      * @param string $method SOAP operation name
-     * @param array  $params SOAP parameters
+     * @param array $params SOAP parameters
      *
+     * @param bool $bypassDuplicates Whether the call include the DuplicateRuleHeader headers.
      * @return array | \Traversable An empty array or a result object, such
      *                              as QueryResult, SaveResult, DeleteResult.
+     * @throws \SoapFault
      */
-    protected function call($method, array $params = array())
+    protected function call($method, array $params = array(), $bypassDuplicates = false)
     {
         $this->init();
 
         // Prepare headers
-        $this->soapClient->__setSoapHeaders($this->getSessionHeader());
+        $headers[] = $this->getSessionHeader();
+
+        if ($bypassDuplicates) {
+            $headers[] = $this->getDuplicateRuleHeader();
+        }
+
+        $this->soapClient->__setSoapHeaders($headers);
 
         $requestEvent = new Event\RequestEvent($method, $params);
         $this->dispatch(Events::REQUEST, $requestEvent);
@@ -613,6 +623,24 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     protected function getSessionHeader()
     {
         return $this->sessionHeader;
+    }
+
+    /**
+     * Get DuplicateRule header
+     *
+     * @return \SoapHeader
+     */
+    public function getDuplicateRuleHeader()
+    {
+        return new \SoapHeader(
+            self::SOAP_NAMESPACE,
+            'DuplicateRuleHeader',
+            array(
+                'allowSave' => true,
+                'includeRecordDetails' => false,
+                'runAsCurrentUser' => false,
+            )
+        );
     }
 
     /**
