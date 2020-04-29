@@ -24,8 +24,8 @@ interface ClientInterface
      *
      * @param array $objects Array of Salesforce objects
      * @param string $objectType Object type, e.g., account or contact
-     *
      * @param bool $bypassDuplicates
+     *
      * @return Result\SaveResult[]
      * @link http://www.salesforce.com/us/developer/docs/api/Content/sforce_api_calls_create.htm
      */
@@ -221,11 +221,12 @@ interface ClientInterface
      *
      * @param array  $objects    Array of objects
      * @param string $objectType Object type, e.g., account or contact
+     * @param bool $bypassDuplicates
      *
      * @return Result\SaveResult[]
      * @link http://www.salesforce.com/us/developer/docs/api/Content/sforce_api_calls_update.htm
      */
-    public function update(array $objects, $objectType);
+    public function update(array $objects, $objectType, $bypassDuplicates = false);
 
     /**
      * Creates new records and updates existing records; uses a custom field to
@@ -235,8 +236,8 @@ interface ClientInterface
      *                                  or external id)
      * @param array $objects Array of objects
      * @param string $objectType Object type, e.g., account or contact
-     *
      * @param bool $bypassDuplicates
+     * 
      * @return Result\UpsertResult[]
      * @link http://www.salesforce.com/us/developer/docs/api/Content/sforce_api_calls_upsert.htm
      */
