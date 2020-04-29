@@ -378,11 +378,12 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * {@inheritdoc}
      */
-    public function update(array $objects, $type)
+    public function update(array $objects, $type, $bypassDuplicates = false)
     {
         $result = $this->call(
             'update',
-            array('sObjects' => $this->createSoapVars($objects, $type))
+            array('sObjects' => $this->createSoapVars($objects, $type)),
+            $bypassDuplicates
         );
 
         return $this->checkResult($result, $objects);
