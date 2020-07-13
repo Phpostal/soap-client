@@ -1,6 +1,7 @@
 <?php
 namespace Phpforce\SoapClient;
 
+use Illuminate\Support\Facades\Cache;
 use Phpforce\Common\AbstractHasDispatcher;
 use Phpforce\SoapClient\Soap\SoapClient;
 use Phpforce\SoapClient\Result;
@@ -20,6 +21,12 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      * @var string
      */
     const SOAP_NAMESPACE = 'urn:enterprise.soap.sforce.com';
+
+    const CACHE_LIFETIME = 110;
+
+    const LOCATION_CACHE_KEY = 'salesforce_soap_location_url';
+
+    const SESSION_ID_CACHE_KEY = 'salesforce_soap_session_id';
 
     /**
      * SOAP session header
@@ -78,6 +85,10 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         $this->username = $username;
         $this->password = $password;
         $this->token = $token;
+
+        if ($this->checkCachedEndpointLocation()) {
+            $this->setEndpointLocation($this->getCachedEndpointLocation());
+        }
     }
 
     /**
@@ -595,6 +606,10 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      */
     protected function init()
     {
+        if ($this->checkCachedSessionId()) {
+            $this->setSessionId($this->getCachedSessionId());
+        }
+
         // If there’s no session header yet, this means we haven’t yet logged in
         if (!$this->getSessionHeader()) {
             $this->doLogin($this->username, $this->password, $this->token);
@@ -664,7 +679,9 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     {
         $this->loginResult = $loginResult;
         $this->setEndpointLocation($loginResult->getServerUrl());
+        $this->cacheEndpointLocation($loginResult->getServerUrl());
         $this->setSessionId($loginResult->getSessionId());
+        $this->cacheSessionId($loginResult->getSessionId());
     }
 
     /**
@@ -725,6 +742,36 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         }
 
         return $sObject;
+    }
+
+    public function cacheEndpointLocation($url)
+    {
+        Cache::put(self::LOCATION_CACHE_KEY, $url, now()->addMinutes(self::CACHE_LIFETIME));
+    }
+
+    public function getCachedEndpointLocation()
+    {
+        return Cache::get(self::LOCATION_CACHE_KEY);
+    }
+
+    public function checkCachedEndpointLocation()
+    {
+        return Cache::has(self::LOCATION_CACHE_KEY);
+    }
+
+    public function cacheSessionId($sessionId)
+    {
+        Cache::put(self::SESSION_ID_CACHE_KEY, $sessionId, now()->addMinutes(self::CACHE_LIFETIME));
+    }
+
+    public function getCachedSessionId()
+    {
+        return Cache::get(self::SESSION_ID_CACHE_KEY);
+    }
+
+    public function checkCachedSessionId()
+    {
+        return Cache::has(self::SESSION_ID_CACHE_KEY);
     }
 }
 
